@@ -33,16 +33,13 @@ jobs:
       - name: Build and extract bootstrap
         run: |
           CONTAINER_NAME="termux-package-builder"
-          # Run build inside container, then copy zip before trap cleanup.
-          # The zip is created at $BOOTSTRAP_TMPDIR/bootstrap-aarch64.zip
-          # but trap cleans it up after build-bootstraps.sh exits.
-          # Fix: run build + find + cp in a single docker exec so zip is
-          # available on the mounted volume before the script exits.
+          # Run build + copy zip to mounted volume inside one docker exec
+          # so the zip survives the trap cleanup. Use sudo because
+          # builder uid may not match host uid on GitHub Actions runners.
           ./scripts/run-docker.sh bash -c '
             cd /home/builder/termux-packages
-            # Temporarily override the trap to skip cleanup
-            ./scripts/build-bootstraps.sh --architectures aarch64 && \
-            cp /tmp/bootstrap-tmp.*/bootstrap-aarch64.zip /home/builder/termux-packages/ 2>/dev/null || true
+            ./scripts/build-bootstraps.sh --architectures aarch64
+            sudo cp /tmp/bootstrap-tmp.*/bootstrap-aarch64.zip /home/builder/termux-packages/ || true
           '
           docker cp "$CONTAINER_NAME:/home/builder/termux-packages/bootstrap-aarch64.zip" bootstrap-aarch64.zip
       - name: Show checksums
