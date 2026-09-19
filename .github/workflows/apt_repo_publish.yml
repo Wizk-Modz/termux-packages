@@ -222,6 +222,6 @@ jobs:
             echo "Nothing to publish."
             exit 0
           fi
-          git -c user.name="github-actions[bot]" -c user.email="github-actions[bot]@users.noreply.github.com" \
+          git -c user.name="Wizk-BOT" -c user.email="wizk-boy@users.noreply.github.com" \
             commit -m "Publish APT repo (${{ env.ARCH }})"
           git push origin "$APT_REPO_BRANCH"
