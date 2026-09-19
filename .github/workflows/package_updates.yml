@@ -98,6 +98,7 @@ jobs:
       contents: write
     if: github.event_name != 'pull_request' && github.event_name != 'push' && github.repository == 'Wizk-Modz/termux-packages'
     runs-on: ubuntu-26.04
+    timeout-minutes: 120
     steps:
       - name: Clone repository
         uses: actions/checkout@v7
