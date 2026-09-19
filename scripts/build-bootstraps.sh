@@ -434,9 +434,7 @@ main() {
 		# Core utilities.
 		PACKAGES+=("bash") # Used by `termux-bootstrap-second-stage.sh`
 		PACKAGES+=("libbz2")
-		if ! ${BOOTSTRAP_ANDROID10_COMPATIBLE}; then
-			PACKAGES+=("command-not-found")
-		else
+		if ${BOOTSTRAP_ANDROID10_COMPATIBLE}; then
 			PACKAGES+=("proot")
 		fi
 		PACKAGES+=("coreutils")
