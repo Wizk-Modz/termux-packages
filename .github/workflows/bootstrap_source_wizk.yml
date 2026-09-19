@@ -30,13 +30,21 @@ jobs:
         uses: actions/checkout@v7
       - name: Free disk space
         run: ./scripts/free-space.sh
-      - name: Build bootstrap from source
-        run: ./scripts/run-docker.sh ./scripts/build-bootstraps.sh --architectures aarch64
-      - name: Extract bootstrap zip from Docker
+      - name: Build and extract bootstrap
         run: |
           CONTAINER_NAME="termux-package-builder"
-          ZIP_PATH=$(docker exec "$CONTAINER_NAME" find /tmp -maxdepth 3 -name 'bootstrap-aarch64.zip' -print -quit)
-          docker cp "$CONTAINER_NAME:$ZIP_PATH" bootstrap-aarch64.zip
+          # Run build inside container, then copy zip before trap cleanup.
+          # The zip is created at $BOOTSTRAP_TMPDIR/bootstrap-aarch64.zip
+          # but trap cleans it up after build-bootstraps.sh exits.
+          # Fix: run build + find + cp in a single docker exec so zip is
+          # available on the mounted volume before the script exits.
+          ./scripts/run-docker.sh bash -c '
+            cd /home/builder/termux-packages
+            # Temporarily override the trap to skip cleanup
+            ./scripts/build-bootstraps.sh --architectures aarch64 && \
+            cp /tmp/bootstrap-tmp.*/bootstrap-aarch64.zip /home/builder/termux-packages/ 2>/dev/null || true
+          '
+          docker cp "$CONTAINER_NAME:/home/builder/termux-packages/bootstrap-aarch64.zip" bootstrap-aarch64.zip
       - name: Show checksums
         run: sha256sum bootstrap-*.zip
       - name: Store artifacts
