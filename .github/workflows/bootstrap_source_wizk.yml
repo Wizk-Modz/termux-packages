@@ -34,7 +34,7 @@ jobs:
         run: ./scripts/run-docker.sh ./scripts/build-bootstraps.sh --architectures aarch64
       - name: Extract bootstrap zip from Docker
         run: |
-          CONTAINER_NAME="termux-docker-$(id -un)"
+          CONTAINER_NAME="termux-package-builder"
           ZIP_PATH=$(docker exec "$CONTAINER_NAME" find /tmp -maxdepth 2 -name 'bootstrap-aarch64.zip' -print -quit)
           docker cp "$CONTAINER_NAME:$ZIP_PATH" bootstrap-aarch64.zip
       - name: Show checksums
