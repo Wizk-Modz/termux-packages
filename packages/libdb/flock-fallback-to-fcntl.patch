@@ -1,0 +1,27 @@
+--- db-18.1.40/src/os/os_flock.c	2020-05-30 00:58:22.000000000 +0700
++++ db-18.1.40.mod/src/os/os_flock.c	2026-10-19 10:59:07.745831413 +0700
+@@ -98,6 +98,24 @@
+ #ifdef HAVE_FLOCK
+ 		RETRY_CHK_EINTR_ONLY(flock(fhp->fd,
+ 		    mode_flock[lockmode] | (nowait ? LOCK_NB : 0)), ret);
++		/*
++		 * Some filesystems, notably the Android FUSE mounts used for
++		 * /sdcard, do not implement flock().  Fall back to an fcntl()
++		 * lock of the whole file, which the kernel provides for every
++		 * filesystem.  Note that fcntl() locks are dropped when any
++		 * descriptor of the file is closed, which is why BDB prefers
++		 * flock() when it is available.
++		 */
++#ifdef HAVE_FCNTL
++		if (ret == ENOSYS || ret == EOPNOTSUPP) {
++			fl.l_start = 0;
++			fl.l_len = 0;
++			fl.l_whence = SEEK_SET;
++			fl.l_type = mode_fcntl[lockmode];
++			RETRY_CHK_EINTR_ONLY(
++			    fcntl(fhp->fd, nowait ? F_SETLK : F_SETLKW, &fl), ret);
++		}
++#endif
+ #else
+ 		ret = __os_filelocking_notsup(env);
+ #endif
